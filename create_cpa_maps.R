@@ -36,6 +36,8 @@ cpa_polygons.df <- merge(cpa_polygons.df, rates,
                          by.x = "cpa_code", by.y = "cpa_code",
                          all.x = TRUE, all.y = TRUE)
 
+### ggplot2 maps ###
+
 # add quintiles field for discrete  scale mapping
 cpa_polygons.df$quintiles <- cut(cpa_polygons.df$rate,6)
 
@@ -49,27 +51,28 @@ ggplot(data = cpa_polygons.df, aes(x= long, y = lat, group = group, fill=quintil
 # continuous scale map
 ggplot(data = cpa_polygons.df, aes(x= long, y = lat, group = group, fill=rate)) +
   geom_polygon() +
-  geom_path() +
-  ggtitle("Rates by CPA")
+  geom_path(size = 0.3) +
+  ggtitle("Rates by CPA") +
+  scale_fill_gradient(low = 'lightblue', high = 'darkblue')
 
-###unfinished
-# add field for grouping by
-add.grouping.bins <- function(var){
-  if(var < 50){
-  "[0, 50)"} else {
-    if(var < 60){
-      "[50, 40)"} else {
-        if (var < 70){
-          "[60, 70)"} else {
-            "[70, 100)"
-          }
-      }
-  }
+### ggvis interactive maps ###
+library(dplyr)
+library(ggvis)
+
+# this is for the tooltip. it does a lookup into the data frame
+# and then uses those values for the popup
+all_values <- function(x) {
+  if(is.null(x)) return(NULL)
+  row <- cpa_polygons.df[cpa_polygons.df$id==x$id,c("CPA","rate1","rate2")]
+  unique_row <- unique(row)
+  paste0(names(unique_row), ": ", format(unique_row), collapse = "<br />")
 }
-###
 
-#testing interactive maps
-library(googleVis)
-
-# add latlong var so package can be used
-cpa_polygons.df$lat_long <- paste(cpa_polygons.df$lat, ":", cpa_polygons.df$long, sep = "")
+cpa_polygons.df %>%
+  group_by(group, id) %>%
+  ggvis(~long, ~lat) %>%
+  layer_paths(strokeWidth := 0.5, stroke := "white", fill = ~rate1) %>%
+  scale_numeric("fill", range = c("lightblue","darkblue")) %>%
+  hide_axis("x") %>% hide_axis("y") %>%
+  #add_legend(title = "Rate 1 (%)") %>% # for some reason this gives an error!
+  add_tooltip(all_values, "hover")
