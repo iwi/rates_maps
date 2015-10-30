@@ -25,7 +25,7 @@ laa_polygons_with_cpa_data <- merge(laa_polygons, laa_cpa_mapping,
 # aggregate laa polygons by the 21 cpas (aggregate by cpa_code)
 cpa_polygons <- raster::aggregate(laa_polygons_with_cpa_data, "cpa_code")
 
-#fortify and merge to create the data frame ggplot will show on the map
+#fortify and merge to create the data frame to be mapped
 cpa_polygons@data$id <- rownames(cpa_polygons@data)
 cpa_polygons.points <- fortify(cpa_polygons, region = "id")
 cpa_polygons.df <- merge(cpa_polygons.points, cpa_polygons@data, sort=FALSE)
@@ -36,26 +36,28 @@ cpa_polygons.df <- merge(cpa_polygons.df, rates,
                          by.x = "cpa_code", by.y = "cpa_code",
                          all.x = TRUE, all.y = TRUE)
 
-### ggplot2 maps ###
+### ggplot2 maps --------------------------------------------------------------
 
 # add quintiles field for discrete  scale mapping
-cpa_polygons.df$quintiles <- cut(cpa_polygons.df$rate,6)
+cpa_polygons.df$quintiles <- cut(cpa_polygons.df$rate1,6)
 
 # discrete scale map
-ggplot(data = cpa_polygons.df, aes(x= long, y = lat, group = group, fill=quintiles)) +
+ggplot_discrete_map <- ggplot(data = cpa_polygons.df,
+                              aes(x= long, y = lat, group = group, fill=quintiles)) +
   geom_polygon() +
   geom_path() +
   ggtitle("Rates by CPA - in quintiles") +
   scale_fill_brewer(palette="Blues")
 
 # continuous scale map
-ggplot(data = cpa_polygons.df, aes(x= long, y = lat, group = group, fill=rate)) +
+ggplot_continuous_map <- ggplot(data = cpa_polygons.df,
+                                aes(x= long, y = lat, group = group, fill=rate1)) +
   geom_polygon() +
   geom_path(size = 0.3) +
   ggtitle("Rates by CPA") +
   scale_fill_gradient(low = 'lightblue', high = 'darkblue')
 
-### ggvis interactive maps ###
+### ggvis interactive maps ----------------------------------------------------
 library(dplyr)
 library(ggvis)
 
@@ -68,7 +70,7 @@ all_values <- function(x) {
   paste0(names(unique_row), ": ", format(unique_row), collapse = "<br />")
 }
 
-cpa_polygons.df %>%
+ggvis_continuous_map <- cpa_polygons.df %>%
   group_by(group, id) %>%
   ggvis(~long, ~lat) %>%
   layer_paths(strokeWidth := 0.5, stroke := "white", fill = ~rate1) %>%
@@ -76,3 +78,12 @@ cpa_polygons.df %>%
   hide_axis("x") %>% hide_axis("y") %>%
   #add_legend(title = "Rate 1 (%)") %>% # for some reason this gives an error!
   add_tooltip(all_values, "hover")
+
+### plot whichever maps you want -----------------------------------------------
+
+plot(ggplot_discrete_map)
+
+plot(ggplot_continuous_map)
+
+# this one takes longer to load because of the interactivity
+ggvis_continuous_map
