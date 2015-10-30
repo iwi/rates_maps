@@ -1,10 +1,10 @@
 #install the packages
-library(rgdal)
-library(mapproj)
-library(raster)
-library(rgeos)
-library(ggplot2)
-library(plyr)
+if (!require(rgdal)) install.packages("rgdal")
+if (!require(mapproj)) install.packages("mapproj")
+if (!require(raster)) install.packages("raster")
+if (!require(rgeos)) install.packages("rgeos")
+if (!require(ggplot2)) install.packages("ggplot2")
+if (!require(plyr)) install.packages("plyr")
 if (!require(gpclib)) install.packages("gpclib", type="source")
 
 gpclibPermit()
