@@ -9,7 +9,12 @@ if (!require(gpclib)) install.packages("gpclib", type="source")
 
 gpclibPermit()
 
-setwd("C:/Users/Annie/Documents/Work/Maps/cpa_maps/inputs")
+path <- readline(prompt = "Please input the path you're working from:  ")
+if (path != '') {
+  setwd(paste(path, "/inputs", sep = ""))
+} else {
+  setwd("C:/Users/Annie/Documents/Work/Maps/cpa_maps/inputs")
+}
 
 #read in laa to cpa mapping
 laa_cpa_mapping <- read.csv("laa_cpa.csv", header = TRUE)
